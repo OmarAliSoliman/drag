@@ -32,12 +32,12 @@
       display: inline-block;
     }
 
-    ul.moveable li img{
+    ul.moveable li img {
       position: relative;
       display: inline-block;
     }
 
-    ul.moveable li img::after{
+    ul.moveable li img::after {
       position: absolute;
       top: 0;
       left: 0;
@@ -62,7 +62,7 @@
       /* background-color: #eee; */
     }
 
-    @media(max-width: 600px){
+    @media(max-width: 600px) {
       ul.moveable {
         flex-wrap: wrap;
       }
@@ -99,84 +99,81 @@
 
 
   <script>
-    let items = document.querySelectorAll('#items-list > li img'); // Select images instead of li elements
+    let items = document.querySelectorAll('#items-list > li img'); // Select images directly
 
-items.forEach(item => {
-  item.setAttribute('draggable', true);  // Explicitly set draggable to true for images
-  item.addEventListener('dragstart', dragStart);
-  item.addEventListener('dragenter', cancelDefault);
-  item.addEventListener('dragover', cancelDefault);
-  item.addEventListener('drop', dropped);
-  item.addEventListener('touchstart', handleTouchStart);  // Added touch start for mobile
-  item.addEventListener('touchmove', handleTouchMove);    // Added touch move for mobile
-  item.addEventListener('touchend', handleTouchEnd);      // Added touch end for mobile
-});
+    let draggedElement = null;
+    let initialX = 0;
+    let initialY = 0;
+    let currentX = 0;
+    let currentY = 0;
 
-// Drag start event handler for desktop
-function dragStart(e) {
-  var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode); // Find the index of the li
-  e.dataTransfer.setData('text/plain', index);
-  e.target.style.opacity = 0.5; // Make the image slightly transparent during dragging
-}
+    items.forEach(item => {
+      item.setAttribute('draggable', true);  // Explicitly set draggable to true for images
+      item.addEventListener('dragstart', dragStart);
+      item.addEventListener('dragover', dragOver);
+      item.addEventListener('dragenter', dragEnter);
+      item.addEventListener('dragend', dragEnd);
 
-// Drop event handler for desktop
-function dropped(e) {
-  cancelDefault(e);
+      // Mobile touch events
+      item.addEventListener('touchstart', touchStart);
+      item.addEventListener('touchmove', touchMove);
+      item.addEventListener('touchend', touchEnd);
+    });
 
-  // Get the old and new index
-  let oldIndex = e.dataTransfer.getData('text/plain');
-  let target = e.target;
-  
-  // Check if the target is an image or a li element and set the target to its parent (li element)
-  if (target.tagName.toLowerCase() === 'img') {
-    target = target.parentNode; // Get the li parent element
-  }
-  
-  let newIndex = Array.from(target.parentNode.children).indexOf(target);
-
-  // If the drop target is a list item (not a parent)
-  if (target.tagName.toLowerCase() === 'li') {
-    // Remove dropped item from old location
-    let dropped = target.parentNode.children[oldIndex];
-
-    // Remove from DOM
-    dropped.remove();
-
-    // Insert dropped item in the new position
-    if (newIndex < oldIndex) {
-      target.before(dropped);
-    } else {
-      target.after(dropped);
+    function dragStart(e) {
+      draggedElement = e.target;
+      draggedElement.style.opacity = '0.5';  // Make the dragged image semi-transparent
+      initialX = e.clientX;
+      initialY = e.clientY;
     }
-  }
-}
 
-// Mobile touch events to handle dragging
-function handleTouchStart(e) {
-  e.preventDefault();  // Prevents the default image preview or download
-  var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
-  e.target.style.opacity = 0.5;  // Make the image slightly transparent
-  e.dataTransfer.setData('text/plain', index);  // Store the index of the image for dragging
-}
+    function dragOver(e) {
+      e.preventDefault();  // Allow dropping by preventing the default action
+    }
 
-function handleTouchMove(e) {
-  e.preventDefault();  // Prevents the default image preview or download
-  // Here you can handle the movement of the dragged image for mobile
-}
+    function dragEnter(e) {
+      e.preventDefault();  // Prevent default behavior for drag enter
+    }
 
-function handleTouchEnd(e) {
-  e.preventDefault();  // Prevents the default image preview or download
-  var target = e.target;
-  // Perform the drop operation or reset the dragged image opacity
-  target.style.opacity = 1; // Reset opacity
-  // Insert image into the correct position as in the desktop drop handler
-}
+    function dragEnd(e) {
+      draggedElement.style.opacity = '1';  // Reset opacity after dragging ends
+      draggedElement = null;
+    }
 
-// Cancel default behavior for dragover and dragenter events
-function cancelDefault(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
+    function touchStart(e) {
+      draggedElement = e.target;
+      draggedElement.style.opacity = '0.5';  // Make the dragged image semi-transparent
+      initialX = e.touches[0].clientX;
+      initialY = e.touches[0].clientY;
+    }
+
+    function touchMove(e) {
+      e.preventDefault();  // Prevent the default action for touchmove
+
+      if (!draggedElement) return;
+
+      // Calculate the distance moved
+      currentX = e.touches[0].clientX - initialX;
+      currentY = e.touches[0].clientY - initialY;
+
+      draggedElement.style.transform = `translate(${currentX}px, ${currentY}px)`;  // Move the image based on touch movement
+    }
+
+    function touchEnd(e) {
+      e.preventDefault();  // Prevent default behavior when touch ends
+
+      if (!draggedElement) return;
+
+      draggedElement.style.opacity = '1';  // Reset opacity after dragging ends
+      draggedElement.style.transform = '';  // Reset transform
+
+      // Handle dropping: Move the image to the closest position (you can customize this logic)
+      let dropTarget = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      if (dropTarget && dropTarget.tagName.toLowerCase() === 'li') {
+        dropTarget.appendChild(draggedElement);  // Insert the dragged image into the new location
+      }
+    }
+
 
 
 
