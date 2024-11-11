@@ -16,20 +16,40 @@
     ul.moveable {
       list-style: none;
       margin: 0px;
+      display: flex;
+      padding: 0;
+      gap: 10px;
+      direction: rtl;
+      /* Space between items */
     }
 
     ul.moveable li {
-      list-style-image: none;
-      margin: 10px;
+      margin: 0;
+      padding: 0;
       border: 1px solid #ccc;
-      padding: 4px;
       border-radius: 4px;
-      color: #666;
       cursor: move;
+      display: inline-block;
+    }
+
+    ul.moveable li img {
+      display: block;
+      width: 100px;
+      /* Set a fixed size for images */
+      height: auto;
+      object-fit: contain;
+      /* Ensure the image fits within the bounds */
+      border-radius: 4px;
     }
 
     ul.moveable li:hover {
-      background-color: #eee;
+      /* background-color: #eee; */
+    }
+
+    @media(max-width: 600px){
+      ul.moveable {
+        flex-wrap: wrap;
+      }
     }
   </style>
 </head>
@@ -38,20 +58,35 @@
 
 
   <ul id="items-list" class="moveable">
-    <li>One</li>
-    <li>Two</li>
-    <li>Three</li>
-    <li>Four</li>
+    <li><input type="hidden" name="arrangement[]" value="146"><img
+        src="https://nahr.art4muslim.net/uploads/choices/07xSYaUWtTnYoeQQb0MQZk9SyIC0HW6Fg7UlqWl3.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="149"><img
+        src="https://nahr.art4muslim.net/uploads/choices/RE1Kv7WTn6ftoNSTqNFeEkpOmpzneYQhjyEIINLN.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="145"><img
+        src="https://nahr.art4muslim.net/uploads/choices/YL9IbgTOnF2SnuFLyULmDSSoyOTwkPY2HTzL0uQ9.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="148"><img
+        src="https://nahr.art4muslim.net/uploads/choices/AjR5qOtjM0LgrEw4VONxa28YnHx1ZjhyMEaZCwnS.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="154"><img
+        src="https://nahr.art4muslim.net/uploads/choices/JrL4vC7bJSm1CID0Ds7p6mCfxurHx4DZbnsaoD9r.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="153"><img
+        src="https://nahr.art4muslim.net/uploads/choices/OEpHbyrY7vo2qX3x0p6dXE32Ysc52TxsCIdM322l.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="147"><img
+        src="https://nahr.art4muslim.net/uploads/choices/PxWTZqy2dZrTWb5Ddlnc2nm9v7H6ICphzqYppiw3.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="144"><img
+        src="https://nahr.art4muslim.net/uploads/choices/BJtshdBBR3i99Qqy5eNfHT9tPLdnKjsMkMBpzh9O.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="150"><img
+        src="https://nahr.art4muslim.net/uploads/choices/Uq19t16Za9lelRkoqGryMCMhjM592etKKyIUrXwu.jpg" width="100"></li>
+    <li><input type="hidden" name="arrangement[]" value="151"><img
+        src="https://nahr.art4muslim.net/uploads/choices/VSxuuu6zdArNNnquKFQr3xQBYIg8KHS0q8yRUMrv.jpg" width="100"></li>
   </ul>
 
 
 
   <script>
-    let items = document.querySelectorAll('#items-list > li')
+    let items = document.querySelectorAll('#items-list > li img') // Select images instead of li elements
 
-    // Make each item draggable
     items.forEach(item => {
-      item.setAttribute('draggable', true);  // Explicitly set draggable to true
+      item.setAttribute('draggable', true);  // Explicitly set draggable to true for images
       item.addEventListener('dragstart', dragStart);
       item.addEventListener('dragenter', cancelDefault);
       item.addEventListener('dragover', cancelDefault);
@@ -60,8 +95,9 @@
 
     // Drag start event handler
     function dragStart(e) {
-      var index = Array.from(e.target.parentNode.children).indexOf(e.target);
+      var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode); // Find the index of the li
       e.dataTransfer.setData('text/plain', index);
+      // e.target.style.opacity = 0.5; // Make the image slightly transparent during dragging
     }
 
     // Drop event handler
@@ -71,6 +107,12 @@
       // Get the old and new index
       let oldIndex = e.dataTransfer.getData('text/plain');
       let target = e.target;
+
+      // Check if the target is an image or a li element and set the target to its parent (li element)
+      if (target.tagName.toLowerCase() === 'img') {
+        target = target.parentNode; // Get the li parent element
+      }
+
       let newIndex = Array.from(target.parentNode.children).indexOf(target);
 
       // If the drop target is a list item (not a parent)
@@ -95,6 +137,7 @@
       e.preventDefault();
       e.stopPropagation();
     }
+
 
   </script>
 </body>
