@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    [draggable="true"] {
+      user-select: none;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+    }
+
+    ul.moveable {
+      list-style: none;
+      margin: 0px;
+    }
+
+    ul.moveable li {
+      list-style-image: none;
+      margin: 10px;
+      border: 1px solid #ccc;
+      padding: 4px;
+      border-radius: 4px;
+      color: #666;
+      cursor: move;
+    }
+
+    ul.moveable li:hover {
+      background-color: #eee;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <ul id="items-list" class="moveable">
+    <li>One</li>
+    <li>Two</li>
+    <li>Three</li>
+    <li>Four</li>
+  </ul>
+
+
+
+  <script>
+    let items = document.querySelectorAll('#items-list > li')
+
+    // Make each item draggable
+    items.forEach(item => {
+      item.setAttribute('draggable', true);  // Explicitly set draggable to true
+      item.addEventListener('dragstart', dragStart);
+      item.addEventListener('dragenter', cancelDefault);
+      item.addEventListener('dragover', cancelDefault);
+      item.addEventListener('drop', dropped);
+    });
+
+    // Drag start event handler
+    function dragStart(e) {
+      var index = Array.from(e.target.parentNode.children).indexOf(e.target);
+      e.dataTransfer.setData('text/plain', index);
+    }
+
+    // Drop event handler
+    function dropped(e) {
+      cancelDefault(e);
+
+      // Get the old and new index
+      let oldIndex = e.dataTransfer.getData('text/plain');
+      let target = e.target;
+      let newIndex = Array.from(target.parentNode.children).indexOf(target);
+
+      // If the drop target is a list item (not a parent)
+      if (target.tagName.toLowerCase() === 'li') {
+        // Remove dropped item from old location
+        let dropped = target.parentNode.children[oldIndex];
+
+        // Remove from DOM
+        dropped.remove();
+
+        // Insert dropped item in the new position
+        if (newIndex < oldIndex) {
+          target.before(dropped);
+        } else {
+          target.after(dropped);
+        }
+      }
+    }
+
+    // Cancel default behavior for dragover and dragenter events
+    function cancelDefault(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+  </script>
+</body>
+
+</html>
