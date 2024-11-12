@@ -99,96 +99,92 @@
 
 
   <script>
-    const items = document.querySelectorAll('#items-list > li img');
+   let items = document.querySelectorAll('#items-list > li img');  // Select images
+let draggedElement = null;
+let startIndex = null;
 
-    let draggedItem = null;
-    let startIndex = null;
+// Desktop events
+items.forEach(item => {
+  item.setAttribute('draggable', true);  
+  item.addEventListener('dragstart', dragStart);
+  item.addEventListener('dragenter', cancelDefault);
+  item.addEventListener('dragover', cancelDefault);
+  item.addEventListener('drop', dropped);
 
-    // Set up desktop drag-and-drop
-    items.forEach((item, index) => {
-      item.setAttribute('draggable', true);
+  // Mobile touch events
+  item.addEventListener('touchstart', touchStart);
+  item.addEventListener('touchmove', touchMove);
+  item.addEventListener('touchend', touchEnd);
+});
 
-      item.addEventListener('dragstart', (e) => {
-        draggedItem = e.target.parentNode;
-        startIndex = index;
-        e.target.style.opacity = '0.5';
-      });
+// Desktop drag start
+function dragStart(e) {
+  startIndex = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
+  draggedElement = e.target;
+  e.dataTransfer.setData('text/plain', startIndex);
+  e.target.style.opacity = 0.5;
+}
 
-      item.addEventListener('dragend', (e) => {
-        e.target.style.opacity = '1';
-      });
+// Desktop drop
+function dropped(e) {
+  cancelDefault(e);
+  
+  let target = e.target;
+  if (target.tagName.toLowerCase() === 'img') target = target.parentNode;
+  let endIndex = Array.from(target.parentNode.children).indexOf(target);
 
-      item.addEventListener('dragover', (e) => {
-        e.preventDefault();
-      });
+  if (endIndex !== startIndex) {
+    swapElements(startIndex, endIndex);
+  }
+  draggedElement.style.opacity = 1;
+  draggedElement = null;
+}
 
-      item.addEventListener('drop', (e) => {
-        e.preventDefault();
-        let target = e.target.closest('li');
-        let targetIndex = Array.from(target.parentNode.children).indexOf(target);
+// Mobile touch start
+function touchStart(e) {
+  e.preventDefault();
+  startIndex = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
+  draggedElement = e.target;
+  draggedElement.style.opacity = 0.5;
+}
 
-        if (startIndex !== targetIndex) {
-          // Move item in the list
-          if (targetIndex < startIndex) {
-            target.before(draggedItem);
-          } else {
-            target.after(draggedItem);
-          }
-        }
-      });
+// Mobile touch move
+function touchMove(e) {
+  e.preventDefault();
+  let touch = e.touches[0];
+  draggedElement.style.position = 'absolute';
+  draggedElement.style.left = touch.pageX - 50 + 'px';  // Adjust position
+  draggedElement.style.top = touch.pageY - 50 + 'px';
+}
 
-      // Mobile Touch Events
-      item.addEventListener('touchstart', handleTouchStart);
-      item.addEventListener('touchmove', handleTouchMove);
-      item.addEventListener('touchend', handleTouchEnd);
-    });
-
-    // Variables to hold touch positions and elements for mobile
-    let touchStartX = 0, touchStartY = 0;
-    let currentTouchTarget = null;
-
-    function handleTouchStart(e) {
-      e.preventDefault();
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      currentTouchTarget = e.target.parentNode;
-      currentTouchTarget.style.opacity = '0.5';
-      startIndex = Array.from(currentTouchTarget.parentNode.children).indexOf(currentTouchTarget);
+// Mobile touch end
+function touchEnd(e) {
+  e.preventDefault();
+  let target = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  if (target && target.tagName.toLowerCase() === 'img') {
+    let endIndex = Array.from(target.parentNode.parentNode.children).indexOf(target.parentNode);
+    if (endIndex !== startIndex) {
+      swapElements(startIndex, endIndex);
     }
+  }
+  draggedElement.style.position = '';
+  draggedElement.style.opacity = 1;
+  draggedElement = null;
+}
 
-    function handleTouchMove(e) {
-      e.preventDefault();
-      let touchMoveX = e.touches[0].clientX;
-      let touchMoveY = e.touches[0].clientY;
+// Helper function to swap elements in the list
+function swapElements(startIndex, endIndex) {
+  const list = document.getElementById('items-list');
+  const items = Array.from(list.children);
+  list.insertBefore(items[startIndex], items[endIndex]);
+}
 
-      // Adjust the current element's position visually to follow the touch
-      currentTouchTarget.style.transform = `translate(${touchMoveX - touchStartX}px, ${touchMoveY - touchStartY}px)`;
-    }
+// Prevent default behavior for drag events
+function cancelDefault(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
 
-    function handleTouchEnd(e) {
-      e.preventDefault();
-      currentTouchTarget.style.opacity = '1';
-      currentTouchTarget.style.transform = '';  // Reset position
-
-      // Detect the drop target
-      let touchEndX = e.changedTouches[0].clientX;
-      let touchEndY = e.changedTouches[0].clientY;
-      let dropTarget = document.elementFromPoint(touchEndX, touchEndY);
-
-      if (dropTarget && dropTarget.tagName.toLowerCase() === 'img') {
-        let dropLi = dropTarget.closest('li');
-        let endIndex = Array.from(dropLi.parentNode.children).indexOf(dropLi);
-
-        // Insert the dragged item in the new position
-        if (endIndex !== startIndex) {
-          if (endIndex < startIndex) {
-            dropLi.before(currentTouchTarget);
-          } else {
-            dropLi.after(currentTouchTarget);
-          }
-        }
-      }
-    }
 
   </script>
 </body>
