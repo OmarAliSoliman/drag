@@ -99,92 +99,84 @@
 
 
   <script>
-   let items = document.querySelectorAll('#items-list > li img');  // Select images
-let draggedElement = null;
-let startIndex = null;
+    let items = document.querySelectorAll('#items-list > li img'); // Select images instead of li elements
 
-// Desktop events
-items.forEach(item => {
-  item.setAttribute('draggable', true);  
-  item.addEventListener('dragstart', dragStart);
-  item.addEventListener('dragenter', cancelDefault);
-  item.addEventListener('dragover', cancelDefault);
-  item.addEventListener('drop', dropped);
+    items.forEach(item => {
+      item.setAttribute('draggable', true);  // Explicitly set draggable to true for images
+      item.addEventListener('dragstart', dragStart);
+      item.addEventListener('dragenter', cancelDefault);
+      item.addEventListener('dragover', cancelDefault);
+      item.addEventListener('drop', dropped);
+      item.addEventListener('touchstart', handleTouchStart);  // Added touch start for mobile
+      item.addEventListener('touchmove', handleTouchMove);    // Added touch move for mobile
+      item.addEventListener('touchend', handleTouchEnd);      // Added touch end for mobile
+    });
 
-  // Mobile touch events
-  item.addEventListener('touchstart', touchStart);
-  item.addEventListener('touchmove', touchMove);
-  item.addEventListener('touchend', touchEnd);
-});
-
-// Desktop drag start
-function dragStart(e) {
-  startIndex = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
-  draggedElement = e.target;
-  e.dataTransfer.setData('text/plain', startIndex);
-  e.target.style.opacity = 0.5;
-}
-
-// Desktop drop
-function dropped(e) {
-  cancelDefault(e);
-  
-  let target = e.target;
-  if (target.tagName.toLowerCase() === 'img') target = target.parentNode;
-  let endIndex = Array.from(target.parentNode.children).indexOf(target);
-
-  if (endIndex !== startIndex) {
-    swapElements(startIndex, endIndex);
-  }
-  draggedElement.style.opacity = 1;
-  draggedElement = null;
-}
-
-// Mobile touch start
-function touchStart(e) {
-  e.preventDefault();
-  startIndex = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
-  draggedElement = e.target;
-  draggedElement.style.opacity = 0.5;
-}
-
-// Mobile touch move
-function touchMove(e) {
-  e.preventDefault();
-  let touch = e.touches[0];
-  draggedElement.style.position = 'absolute';
-  draggedElement.style.left = touch.pageX - 50 + 'px';  // Adjust position
-  draggedElement.style.top = touch.pageY - 50 + 'px';
-}
-
-// Mobile touch end
-function touchEnd(e) {
-  e.preventDefault();
-  let target = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-  if (target && target.tagName.toLowerCase() === 'img') {
-    let endIndex = Array.from(target.parentNode.parentNode.children).indexOf(target.parentNode);
-    if (endIndex !== startIndex) {
-      swapElements(startIndex, endIndex);
+    // Drag start event handler for desktop
+    function dragStart(e) {
+      var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode); // Find the index of the li
+      e.dataTransfer.setData('text/plain', index);
+      e.target.style.opacity = 0.5; // Make the image slightly transparent during dragging
     }
-  }
-  draggedElement.style.position = '';
-  draggedElement.style.opacity = 1;
-  draggedElement = null;
-}
 
-// Helper function to swap elements in the list
-function swapElements(startIndex, endIndex) {
-  const list = document.getElementById('items-list');
-  const items = Array.from(list.children);
-  list.insertBefore(items[startIndex], items[endIndex]);
-}
+    // Drop event handler for desktop
+    function dropped(e) {
+      cancelDefault(e);
 
-// Prevent default behavior for drag events
-function cancelDefault(e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
+      // Get the old and new index
+      let oldIndex = e.dataTransfer.getData('text/plain');
+      let target = e.target;
 
+      // Check if the target is an image or a li element and set the target to its parent (li element)
+      if (target.tagName.toLowerCase() === 'img') {
+        target = target.parentNode; // Get the li parent element
+      }
+
+      let newIndex = Array.from(target.parentNode.children).indexOf(target);
+
+      // If the drop target is a list item (not a parent)
+      if (target.tagName.toLowerCase() === 'li') {
+        // Remove dropped item from old location
+        let dropped = target.parentNode.children[oldIndex];
+
+        // Remove from DOM
+        dropped.remove();
+
+        // Insert dropped item in the new position
+        if (newIndex < oldIndex) {
+          target.before(dropped);
+        } else {
+          target.after(dropped);
+        }
+      }
+    }
+
+    // Mobile touch events to handle dragging
+    function handleTouchStart(e) {
+      e.preventDefault();  // Prevents the default image preview or download
+      var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
+      e.target.style.opacity = 0.5;  // Make the image slightly transparent
+      e.dataTransfer.setData('text/plain', index);  // Store the index of the image for dragging
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();  // Prevents the default image preview or download
+      // Here you can handle the movement of the dragged image for mobile
+    }
+
+    function handleTouchEnd(e) {
+      e.preventDefault();  // Prevents the default image preview or download
+      var target = e.target;
+      // Perform the drop operation or reset the dragged image opacity
+      target.style.opacity = 1; // Reset opacity
+      // Insert image into the correct position as in the desktop drop handler
+    }
+
+    // Cancel default behavior for dragover and dragenter events
+    function cancelDefault(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
   </script>
 </body>
