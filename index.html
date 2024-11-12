@@ -99,84 +99,97 @@
 
 
   <script>
-    let items = document.querySelectorAll('#items-list > li img'); // Select images instead of li elements
+    const items = document.querySelectorAll('#items-list > li img');
 
-    items.forEach(item => {
-      item.setAttribute('draggable', true);  // Explicitly set draggable to true for images
-      item.addEventListener('dragstart', dragStart);
-      item.addEventListener('dragenter', cancelDefault);
-      item.addEventListener('dragover', cancelDefault);
-      item.addEventListener('drop', dropped);
-      item.addEventListener('touchstart', handleTouchStart);  // Added touch start for mobile
-      item.addEventListener('touchmove', handleTouchMove);    // Added touch move for mobile
-      item.addEventListener('touchend', handleTouchEnd);      // Added touch end for mobile
+    let draggedItem = null;
+    let startIndex = null;
+
+    // Set up desktop drag-and-drop
+    items.forEach((item, index) => {
+      item.setAttribute('draggable', true);
+
+      item.addEventListener('dragstart', (e) => {
+        draggedItem = e.target.parentNode;
+        startIndex = index;
+        e.target.style.opacity = '0.5';
+      });
+
+      item.addEventListener('dragend', (e) => {
+        e.target.style.opacity = '1';
+      });
+
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+
+      item.addEventListener('drop', (e) => {
+        e.preventDefault();
+        let target = e.target.closest('li');
+        let targetIndex = Array.from(target.parentNode.children).indexOf(target);
+
+        if (startIndex !== targetIndex) {
+          // Move item in the list
+          if (targetIndex < startIndex) {
+            target.before(draggedItem);
+          } else {
+            target.after(draggedItem);
+          }
+        }
+      });
+
+      // Mobile Touch Events
+      item.addEventListener('touchstart', handleTouchStart);
+      item.addEventListener('touchmove', handleTouchMove);
+      item.addEventListener('touchend', handleTouchEnd);
     });
 
-    // Drag start event handler for desktop
-    function dragStart(e) {
-      var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode); // Find the index of the li
-      e.dataTransfer.setData('text/plain', index);
-      e.target.style.opacity = 0.5; // Make the image slightly transparent during dragging
+    // Variables to hold touch positions and elements for mobile
+    let touchStartX = 0, touchStartY = 0;
+    let currentTouchTarget = null;
+
+    function handleTouchStart(e) {
+      e.preventDefault();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      currentTouchTarget = e.target.parentNode;
+      currentTouchTarget.style.opacity = '0.5';
+      startIndex = Array.from(currentTouchTarget.parentNode.children).indexOf(currentTouchTarget);
     }
 
-    // Drop event handler for desktop
-    function dropped(e) {
-      cancelDefault(e);
+    function handleTouchMove(e) {
+      e.preventDefault();
+      let touchMoveX = e.touches[0].clientX;
+      let touchMoveY = e.touches[0].clientY;
 
-      // Get the old and new index
-      let oldIndex = e.dataTransfer.getData('text/plain');
-      let target = e.target;
+      // Adjust the current element's position visually to follow the touch
+      currentTouchTarget.style.transform = `translate(${touchMoveX - touchStartX}px, ${touchMoveY - touchStartY}px)`;
+    }
 
-      // Check if the target is an image or a li element and set the target to its parent (li element)
-      if (target.tagName.toLowerCase() === 'img') {
-        target = target.parentNode; // Get the li parent element
-      }
+    function handleTouchEnd(e) {
+      e.preventDefault();
+      currentTouchTarget.style.opacity = '1';
+      currentTouchTarget.style.transform = '';  // Reset position
 
-      let newIndex = Array.from(target.parentNode.children).indexOf(target);
+      // Detect the drop target
+      let touchEndX = e.changedTouches[0].clientX;
+      let touchEndY = e.changedTouches[0].clientY;
+      let dropTarget = document.elementFromPoint(touchEndX, touchEndY);
 
-      // If the drop target is a list item (not a parent)
-      if (target.tagName.toLowerCase() === 'li') {
-        // Remove dropped item from old location
-        let dropped = target.parentNode.children[oldIndex];
+      if (dropTarget && dropTarget.tagName.toLowerCase() === 'img') {
+        let dropLi = dropTarget.closest('li');
+        let endIndex = Array.from(dropLi.parentNode.children).indexOf(dropLi);
 
-        // Remove from DOM
-        dropped.remove();
-
-        // Insert dropped item in the new position
-        if (newIndex < oldIndex) {
-          target.before(dropped);
-        } else {
-          target.after(dropped);
+        // Insert the dragged item in the new position
+        if (endIndex !== startIndex) {
+          if (endIndex < startIndex) {
+            dropLi.before(currentTouchTarget);
+          } else {
+            dropLi.after(currentTouchTarget);
+          }
         }
       }
     }
 
-    // Mobile touch events to handle dragging
-    function handleTouchStart(e) {
-      e.preventDefault();  // Prevents the default image preview or download
-      var index = Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode);
-      e.target.style.opacity = 0.5;  // Make the image slightly transparent
-      e.dataTransfer.setData('text/plain', index);  // Store the index of the image for dragging
-    }
-
-    function handleTouchMove(e) {
-      e.preventDefault();  // Prevents the default image preview or download
-      // Here you can handle the movement of the dragged image for mobile
-    }
-
-    function handleTouchEnd(e) {
-      e.preventDefault();  // Prevents the default image preview or download
-      var target = e.target;
-      // Perform the drop operation or reset the dragged image opacity
-      target.style.opacity = 1; // Reset opacity
-      // Insert image into the correct position as in the desktop drop handler
-    }
-
-    // Cancel default behavior for dragover and dragenter events
-    function cancelDefault(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
 
   </script>
 </body>
